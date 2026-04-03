@@ -11,6 +11,7 @@ import EmptyState from "@/components/EmptyState";
 import { Video, VideoInsert, Platform, Category } from "@/types/video";
 import { Profile } from "@/types/user";
 import { supabase } from "@/lib/supabaseClient";
+import { calculateAge } from "@/services/youtube";
 
 // No more DEMO_VIDEOS - We are using live Supabase data now
 
@@ -90,7 +91,13 @@ export default function DashboardPage() {
 
   // Filtered videos
   const filteredVideos = useMemo(() => {
+    const userAge = calculateAge(profile?.date_of_birth || null);
+    const isAdult = userAge >= 18;
+
     return videos.filter((v) => {
+      // 18+ Filter
+      if (v.is_18_plus && !isAdult) return false;
+
       const matchesPlatform =
         activePlatform === "all" || v.platform.toLowerCase() === activePlatform.toLowerCase();
       const matchesCategory =
@@ -101,7 +108,7 @@ export default function DashboardPage() {
         v.channel_name?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesPlatform && matchesCategory && matchesSearch;
     });
-  }, [videos, activePlatform, activeCategory, searchQuery]);
+  }, [videos, activePlatform, activeCategory, searchQuery, profile]);
 
   // Stats
   const stats = useMemo(

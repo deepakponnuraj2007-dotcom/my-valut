@@ -97,8 +97,12 @@ export async function mapYouTubeToVideoInsert(
   
   const title = snippet.title;
   const description = snippet.description;
-  const combinedText = `${title} ${description}`.toLowerCase();
+  const combinedText = `${title} ${description} ${snippet.tags?.join(" ") || ""}`.toLowerCase();
   const category = autoDetectCategory(combinedText);
+
+  // Simple heuristic for 18+ content detection
+  const is18PlusKeywords = ["18+", "nsfw", "adult", "restricted", "mature"];
+  const is18Plus = is18PlusKeywords.some(keyword => combinedText.includes(keyword));
 
   return {
     platform: "youtube",
@@ -117,7 +121,25 @@ export async function mapYouTubeToVideoInsert(
     view_count: parseInt(statistics.viewCount, 10) || 0,
     like_count: parseInt(statistics.likeCount, 10) || 0,
     duration: contentDetails.duration,
+    is_18_plus: is18Plus,
   };
+}
+
+/**
+ * Calculate age from date of birth string (YYYY-MM-DD)
+ */
+export function calculateAge(dobString: string | null): number {
+  if (!dobString) return 0;
+  const birthDate = new Date(dobString);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
 }
 
 /**

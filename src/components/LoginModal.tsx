@@ -13,8 +13,8 @@ type ViewState = "selection" | "login" | "signup";
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [view, setView] = useState<ViewState>("selection");
   const [email, setEmail] = useState("");
-  const 
-  [isLoading, setIsLoading] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const DEFAULT_PASSWORD = "vault_user_password_2024"; // Hardcoded for email-only experience
@@ -49,9 +49,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         handleClose();
       }
     } else if (view === "signup") {
+      if (!dateOfBirth) {
+        setErrorMsg("Date of Birth is required for account creation.");
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password: DEFAULT_PASSWORD,
+        options: {
+          data: {
+            date_of_birth: dateOfBirth,
+          }
+        }
       });
 
       if (error) {
@@ -146,6 +157,25 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       className="vault-input"
                     />
                   </div>
+
+                  {view === "signup" && (
+                    <div className="mt-4 animate-fade-in">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-vault-muted mb-2">
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        max={new Date().toISOString().split("T")[0]}
+                        value={dateOfBirth}
+                        onChange={(e) => setDateOfBirth(e.target.value)}
+                        className="vault-input [color-scheme:dark]"
+                      />
+                      <p className="text-[10px] text-vault-muted mt-2 italic">
+                        Required to filter age-appropriate content.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
               {errorMsg && (

@@ -24,6 +24,7 @@ export default function AddVideoModal({
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [channelName, setChannelName] = useState("");
   const [description, setDescription] = useState("");
+  const [is18Plus, setIs18Plus] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function AddVideoModal({
               setChannelName(mapped.channel_name || "");
               setDescription(mapped.description || "");
               if (mapped.category) setCategory(mapped.category);
+              if (mapped.is_18_plus !== undefined) setIs18Plus(mapped.is_18_plus);
             }
           }
         } else {
@@ -95,6 +97,7 @@ export default function AddVideoModal({
       thumbnail_url: thumbnailUrl || null,
       channel_name: channelName || null,
       description: description || null,
+      is_18_plus: is18Plus,
     };
 
     onSave(video);
@@ -112,6 +115,7 @@ export default function AddVideoModal({
     setCategory("Other");
     setCustomPlatform("");
     setIsOtherPlatform(false);
+    setIs18Plus(false);
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -319,6 +323,35 @@ export default function AddVideoModal({
                 rows={3}
                 className="vault-input resize-none"
               />
+            </div>
+
+            {/* 18+ Toggle */}
+            <div className="flex items-center justify-between p-4 bg-vault-deeper/50 rounded-xl border border-vault-border group hover:border-vault-accent/20 transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg transition-colors ${is18Plus ? 'bg-red-500/20 text-red-400' : 'bg-vault-card text-vault-muted'}`}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v4M12 16h.01" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-vault-text">18+ Restricted Content</h3>
+                  <p className="text-[10px] text-vault-muted">Hide this video from users under 18</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIs18Plus(!is18Plus)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none ${
+                   is18Plus ? "bg-red-500/60 shadow-[0_0_10px_rgba(239,68,68,0.3)]" : "bg-vault-card border border-vault-border"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
+                    is18Plus ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
 
             {/* Actions */}

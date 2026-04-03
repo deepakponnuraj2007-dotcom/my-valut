@@ -1,13 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import LoginModal from "@/components/LoginModal";
 import ProfileModal from "@/components/ProfileModal";
+import VideoCard from "@/components/VideoCard";
 import { YouTubeVideoResource, VideoInsert, Category } from "@/types/video";
 import { Profile } from "@/types/user";
-import { searchYouTubeVideos, mapYouTubeToVideoInsert, fetchPopularVideos } from "@/services/youtube";
+import { 
+  searchYouTubeVideos, 
+  mapYouTubeToVideoInsert, 
+  fetchPopularVideos,
+  calculateAge 
+} from "@/services/youtube";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
@@ -83,19 +89,17 @@ export default function ExplorePage() {
     }
   };
 
-  const handleSearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!query.trim()) {
-      fetchPopular();
-      return;
-    }
-
+  const executeSearch = async (searchQuery: string) => {
     setIsLoading(true);
     setResults([]);
     try {
+      let platformKeywords = "";
+      if (activePlatform === "instagram") platformKeywords = "instagram reel shorts";
+      if (activePlatform === "facebook") platformKeywords = "facebook video";
+      
       const effectiveQuery = activePlatform === "youtube" 
-        ? query 
-        : `${activePlatform} ${query} ${activePlatform === "instagram" ? "reels shorts" : "videos"}`;
+        ? searchQuery 
+        : `${searchQuery} ${platformKeywords}`.trim();
       
       const data = await searchYouTubeVideos(effectiveQuery, 50);
       setResults(data);
@@ -104,6 +108,15 @@ export default function ExplorePage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!query.trim()) {
+      fetchPopular();
+      return;
+    }
+    await executeSearch(query);
   };
 
   const addToVault = async (resource: YouTubeVideoResource) => {
@@ -140,6 +153,31 @@ export default function ExplorePage() {
     await supabase.auth.signOut();
     setIsProfileOpen(false);
   };
+
+  const mapToVideo = (yt: YouTubeVideoResource) => ({
+    id: yt.id,
+    user_email: "",
+    platform: activePlatform,
+    category: "Other" as Category,
+    video_url: `https://youtube.com/watch?v=${yt.id}`,
+    title: yt.snippet.title,
+    thumbnail_url: yt.snippet.thumbnails.high?.url || yt.snippet.thumbnails.medium?.url || null,
+    channel_name: yt.snippet.channelTitle,
+    published_at: yt.snippet.publishedAt,
+    tags: yt.snippet.tags || [],
+    view_count: parseInt(yt.statistics.viewCount || "0"),
+    like_count: parseInt(yt.statistics.likeCount || "0"),
+    duration: yt.contentDetails.duration,
+    is_18_plus: (yt as any).is_18_plus || false,
+    created_at: "",
+    updated_at: ""
+  });
+
+  const filteredResults = useMemo(() => {
+    const userAge = calculateAge(profile?.date_of_birth || null);
+    const isAdult = userAge >= 18;
+    return results.filter(v => isAdult || !(v as any).is_18_plus);
+  }, [results, profile]);
 
   return (
     <>
@@ -182,7 +220,7 @@ export default function ExplorePage() {
               <h3 className="text-xs font-semibold text-vault-muted uppercase tracking-widest mb-4">Platforms</h3>
               <div className="space-y-1">
                 <button 
-                  onClick={() => { setActivePlatform("youtube"); setQuery(""); fetchPopular(); }}
+                  onClick={() => { setActivePlatform("youtube"); setQuery(""); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                     activePlatform === "youtube" 
                     ? "bg-vault-accent/15 text-vault-accent border border-vault-accent/30 font-medium shadow-glow-sm"
@@ -195,7 +233,7 @@ export default function ExplorePage() {
                   YouTube
                 </button>
                 <button 
-                  onClick={() => { setActivePlatform("instagram"); setQuery(""); fetchPopular(); }}
+                  onClick={() => { setActivePlatform("instagram"); setQuery(""); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                     activePlatform === "instagram" 
                     ? "bg-vault-instagram/15 text-vault-instagram border border-vault-instagram/30 font-medium shadow-glow-sm"
@@ -208,7 +246,7 @@ export default function ExplorePage() {
                   Instagram
                 </button>
                 <button 
-                  onClick={() => { setActivePlatform("facebook"); setQuery(""); fetchPopular(); }}
+                  onClick={() => { setActivePlatform("facebook"); setQuery(""); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                     activePlatform === "facebook" 
                     ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shadow-glow-sm"
@@ -279,7 +317,7 @@ export default function ExplorePage() {
                   <button
                     key={tag}
                     type="button"
-                    onClick={() => { setQuery(tag); if (activePlatform === "youtube") setTimeout(() => handleSearch(), 100); }}
+                    onClick={() => { setQuery(tag); executeSearch(tag); }}
                     className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/5 hover:border-vault-accent/30 hover:bg-vault-accent/5 transition-all outline-none"
                   >
                     {tag}
@@ -293,13 +331,13 @@ export default function ExplorePage() {
                 <div className="w-12 h-12 border-4 border-vault-accent/20 border-t-vault-accent rounded-full animate-spin" />
                 <p className="text-vault-muted animate-pulse">Finding matching {activePlatform} content...</p>
               </div>
-            ) : results.length > 0 ? (
+            ) : filteredResults.length > 0 ? (
               <div className={`grid gap-6 ${
                 activePlatform === "youtube" 
                 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3" 
                 : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
               }`}>
-                {results.map((video) => {
+                {filteredResults.map((video) => {
                   const igRegex = /(https?:\/\/(www\.)?instagram\.com\/(p|reels|reel)\/([^/?#&\s]+))/;
                   const fbRegex = /(https?:\/\/(www\.)?facebook\.com\/([^/?#&\s]+)\/videos\/([^/?#&\s]+))/;
                   
@@ -402,6 +440,22 @@ export default function ExplorePage() {
                     </div>
                   );
                 })}
+              </div>
+            ) : (query || results.length > 0) && filteredResults.length === 0 && !isLoading ? (
+               <div className="text-center py-20 flex flex-col items-center">
+                <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
+                  <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-vault-text">Content Restricted</h3>
+                <p className="text-vault-muted text-sm max-w-xs mx-auto">
+                  18+ content matched your search but is hidden due to your account age.
+                </p>
+                <div className="mt-6 px-4 py-2 rounded-full border border-vault-accent/30 bg-vault-accent/5 text-[10px] text-vault-accent font-black uppercase tracking-widest">
+                   Adult Verification Required
+                </div>
               </div>
             ) : query && !isLoading ? (
               <div className="text-center py-20">

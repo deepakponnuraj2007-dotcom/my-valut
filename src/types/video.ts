@@ -16,6 +16,7 @@ export interface Video {
   view_count: number;
   like_count: number;
   duration: string | null;
+  is_18_plus: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +35,7 @@ export interface VideoInsert {
   view_count?: number;
   like_count?: number;
   duration?: string | null;
+  is_18_plus?: boolean;
 }
 
 // ----- YouTube Data API response shapes -----

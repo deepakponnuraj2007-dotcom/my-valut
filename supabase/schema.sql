@@ -24,8 +24,10 @@ CREATE TABLE public.videos (
   published_at  TIMESTAMPTZ,
   tags          TEXT[] DEFAULT '{}',
   view_count    BIGINT DEFAULT 0,
+  view_count    BIGINT DEFAULT 0,
   like_count    BIGINT DEFAULT 0,
   duration      TEXT,            -- ISO 8601 duration string (e.g., "PT4M13S")
+  is_18_plus    BOOLEAN DEFAULT false,
   created_at    TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at    TIMESTAMPTZ DEFAULT now() NOT NULL
 );
@@ -91,6 +93,7 @@ CREATE TABLE public.profiles (
   id            UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   full_name     TEXT,
   avatar_url    TEXT,
+  date_of_birth DATE,
   is_premium    BOOLEAN DEFAULT false,
   created_at    TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at    TIMESTAMPTZ DEFAULT now() NOT NULL
@@ -113,11 +116,12 @@ CREATE POLICY "Allow individual profile update"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url)
+  INSERT INTO public.profiles (id, full_name, avatar_url, date_of_birth)
   VALUES (
     NEW.id,
     NEW.raw_user_meta_data->>'full_name',
-    NEW.raw_user_meta_data->>'avatar_url'
+    NEW.raw_user_meta_data->>'avatar_url',
+    (NEW.raw_user_meta_data->>'date_of_birth')::DATE
   );
   RETURN NEW;
 END;

@@ -54,11 +54,18 @@ export default function VideoCard({ video, onDelete }: VideoCardProps) {
         className="block relative aspect-video overflow-hidden bg-vault-deeper"
       >
         {video.thumbnail_url ? (
-          <img
-            src={video.thumbnail_url}
-            alt={video.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          <>
+            <img
+              src={video.thumbnail_url}
+              alt={video.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {video.is_18_plus && (
+              <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-red-600/90 text-white text-[10px] font-black tracking-tighter backdrop-blur-md shadow-lg z-10 border border-white/20 animate-pulse">
+                18+
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg

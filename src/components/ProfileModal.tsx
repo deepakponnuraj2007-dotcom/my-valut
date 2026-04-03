@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Profile } from "@/types/user";
+import { calculateAge } from "@/services/youtube";
 
 interface CategoryStats {
   Education: number;
@@ -105,6 +106,27 @@ export default function ProfileModal({
                 </span>
               </div>
             </div>
+
+            {/* Account Details (DOB & Age) */}
+            {profile?.date_of_birth && (
+              <div className="mt-6 flex flex-col items-center animate-fade-in">
+                <div className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4">
+                  <div className="text-left">
+                    <div className="text-[9px] uppercase font-bold text-white/30 tracking-widest leading-none mb-1">Birth Date</div>
+                    <div className="text-xs font-bold text-white/80">
+                      {new Date(profile.date_of_birth).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                  </div>
+                  <div className="w-px h-6 bg-white/10" />
+                  <div className="text-right">
+                    <div className="text-[9px] uppercase font-bold text-white/30 tracking-widest leading-none mb-1">Status</div>
+                    <div className={`text-[10px] font-black px-2 py-0.5 rounded-full ${calculateAge(profile.date_of_birth) >= 18 ? 'bg-green-500/20 text-green-400' : 'bg-vault-accent/20 text-vault-accent'}`}>
+                      {calculateAge(profile.date_of_birth) >= 18 ? 'ADULT (18+)' : `MINOR (${calculateAge(profile.date_of_birth)})`}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-10">
