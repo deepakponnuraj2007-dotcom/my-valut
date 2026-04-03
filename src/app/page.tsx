@@ -88,12 +88,20 @@ export default function DashboardPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Filtered videos
+  const uniqueVideos = useMemo(() => {
+    const map = new Map<string, Video>();
+    videos.forEach(v => {
+      if (!map.has(v.video_url)) map.set(v.video_url, v);
+    });
+    return Array.from(map.values());
+  }, [videos]);
+
+  // Filtered and Deduplicated videos
   const filteredVideos = useMemo(() => {
     const userAge = calculateAge(profile?.date_of_birth || null);
     const isAdult = userAge >= 18;
 
-    return videos.filter((v) => {
+    return uniqueVideos.filter((v) => {
       // 18+ Filter
       if (v.is_18_plus && !isAdult) return false;
 
@@ -107,29 +115,29 @@ export default function DashboardPage() {
         v.channel_name?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesPlatform && matchesCategory && matchesSearch;
     });
-  }, [videos, activePlatform, activeCategory, searchQuery, profile]);
+  }, [uniqueVideos, activePlatform, activeCategory, searchQuery, profile]);
 
   // Stats
   const stats = useMemo(
     () => ({
-      total: videos.length,
-      youtube: videos.filter((v) => v.platform === "youtube").length,
-      instagram: videos.filter((v) => v.platform === "instagram").length,
+      total: uniqueVideos.length,
+      youtube: uniqueVideos.filter((v) => v.platform === "youtube").length,
+      instagram: uniqueVideos.filter((v) => v.platform === "instagram").length,
       categories: {
-        Education: videos.filter((v) => v.category === "Education").length,
-        Entertainment: videos.filter((v) => v.category === "Entertainment").length,
-        Skill: videos.filter((v) => v.category === "Skill").length,
-        Vlogs: videos.filter((v) => v.category === "Vlogs").length,
-        Other: videos.filter((v) => v.category === "Other").length,
+        Education: uniqueVideos.filter((v) => v.category === "Education").length,
+        Entertainment: uniqueVideos.filter((v) => v.category === "Entertainment").length,
+        Skill: uniqueVideos.filter((v) => v.category === "Skill").length,
+        Vlogs: uniqueVideos.filter((v) => v.category === "Vlogs").length,
+        Other: uniqueVideos.filter((v) => v.category === "Other").length,
       },
     }),
-    [videos]
+    [uniqueVideos]
   );
 
   const uniquePlatforms = useMemo(() => {
-    const platforms = videos.map((v) => v.platform.toLowerCase());
+    const platforms = uniqueVideos.map((v) => v.platform.toLowerCase());
     return Array.from(new Set(platforms));
-  }, [videos]);
+  }, [uniqueVideos]);
 
   const handleSaveVideo = async (insert: VideoInsert) => {
     // Check if the video is already in the vault for this user

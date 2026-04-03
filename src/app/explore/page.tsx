@@ -131,9 +131,9 @@ export default function ExplorePage() {
       .select("id")
       .eq("user_email", userEmail)
       .eq("video_url", videoUrl)
-      .maybeSingle();
+      .limit(1);
 
-    if (existing) {
+    if (existing && existing.length > 0) {
       alert("This video is already in your vault!");
       return;
     }
