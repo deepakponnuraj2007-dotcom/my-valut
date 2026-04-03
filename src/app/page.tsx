@@ -132,6 +132,14 @@ export default function DashboardPage() {
   }, [videos]);
 
   const handleSaveVideo = async (insert: VideoInsert) => {
+    // Check if the video is already in the vault for this user
+    const isDuplicate = videos.some(v => v.video_url === insert.video_url);
+    if (isDuplicate) {
+      alert("This video is already in your vault!");
+      setIsModalOpen(false);
+      return;
+    }
+
     // Ensure all optional fields are properly handled as null if undefined
     const newVideoData: VideoInsert = {
       ...insert,

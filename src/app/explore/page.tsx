@@ -124,6 +124,20 @@ export default function ExplorePage() {
     }
 
     const videoUrl = `https://www.youtube.com/watch?v=${resource.id}`;
+    
+    // Check for duplicate in the database
+    const { data: existing } = await supabase
+      .from("videos")
+      .select("id")
+      .eq("user_email", userEmail)
+      .eq("video_url", videoUrl)
+      .maybeSingle();
+
+    if (existing) {
+      alert("This video is already in your vault!");
+      return;
+    }
+
     const mapped = await mapYouTubeToVideoInsert(resource, videoUrl);
     
     // Explicitly add user_email for persistence

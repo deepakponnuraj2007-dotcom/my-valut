@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
 interface NavbarProps {
   onAddVideo: () => void;
@@ -24,21 +25,36 @@ export default function Navbar({
 }: NavbarProps) {
   const avatarLetter = userEmail ? userEmail[0].toUpperCase() : "";
   const [isFocused, setIsFocused] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
       <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between gap-6">
-        {/* Left Side: Burger + Logo */}
-        <div className="flex items-center gap-4">
+        {/* Left Side: Burger + Back + Logo */}
+        <div className="flex items-center gap-2 sm:gap-4">
           <button 
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg hover:bg-white/5 text-vault-text-secondary active:scale-95 transition-all"
+            className="lg:hidden p-2 rounded-lg hover:bg-white/5 text-vault-text-secondary active:scale-95 transition-all outline-none"
             aria-label="Toggle Menu"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
+
+          {pathname !== '/' && (
+            <button
+              onClick={() => router.back()}
+              className="p-2 rounded-lg hover:bg-white/5 text-vault-muted hover:text-white active:scale-95 transition-all outline-none flex items-center gap-1"
+              aria-label="Go Back"
+              title="Go Back"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
 
           <Link href="/" className="flex items-center gap-3 shrink-0 hover:opacity-80 transition-opacity">
             <div className="w-9 h-9 rounded-lg bg-accent-gradient flex items-center justify-center shadow-glow">
