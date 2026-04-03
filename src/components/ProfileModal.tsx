@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Profile } from "@/types/user";
-import { calculateAge } from "@/services/youtube";
+import { calculateAge } from "@/utils/age";
 
 interface CategoryStats {
   Education: number;
