@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Platform, VideoInsert, Category } from "@/types/video";
+import { VideoInsert, Category } from "@/types/video";
 import { extractVideoId, fetchVideoDetails, mapYouTubeToVideoInsert, detectPlatformFromUrl, fetchMetadataFromUrl } from "@/services/youtube";
 
 interface AddVideoModalProps {

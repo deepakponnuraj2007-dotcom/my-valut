@@ -5,8 +5,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import LoginModal from "@/components/LoginModal";
 import ProfileModal from "@/components/ProfileModal";
-import VideoCard from "@/components/VideoCard";
-import { YouTubeVideoResource, VideoInsert, Category } from "@/types/video";
+import { YouTubeVideoResource } from "@/types/video";
 import { Profile } from "@/types/user";
 import { 
   searchYouTubeVideos, 
@@ -15,7 +14,6 @@ import {
   calculateAge 
 } from "@/services/youtube";
 import { supabase } from "@/lib/supabaseClient";
-import Link from "next/link";
 
 export default function ExplorePage() {
   const [query, setQuery] = useState("");
@@ -153,25 +151,6 @@ export default function ExplorePage() {
     await supabase.auth.signOut();
     setIsProfileOpen(false);
   };
-
-  const mapToVideo = (yt: YouTubeVideoResource) => ({
-    id: yt.id,
-    user_email: "",
-    platform: activePlatform,
-    category: "Other" as Category,
-    video_url: `https://youtube.com/watch?v=${yt.id}`,
-    title: yt.snippet.title,
-    thumbnail_url: yt.snippet.thumbnails.high?.url || yt.snippet.thumbnails.medium?.url || null,
-    channel_name: yt.snippet.channelTitle,
-    published_at: yt.snippet.publishedAt,
-    tags: yt.snippet.tags || [],
-    view_count: parseInt(yt.statistics.viewCount || "0"),
-    like_count: parseInt(yt.statistics.likeCount || "0"),
-    duration: yt.contentDetails.duration,
-    is_18_plus: (yt as any).is_18_plus || false,
-    created_at: "",
-    updated_at: ""
-  });
 
   const filteredResults = useMemo(() => {
     const userAge = calculateAge(profile?.date_of_birth || null);

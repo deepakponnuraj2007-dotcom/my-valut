@@ -8,7 +8,7 @@ import AddVideoModal from "@/components/AddVideoModal";
 import LoginModal from "@/components/LoginModal";
 import ProfileModal from "@/components/ProfileModal";
 import EmptyState from "@/components/EmptyState";
-import { Video, VideoInsert, Platform, Category } from "@/types/video";
+import { Video, VideoInsert, Category } from "@/types/video";
 import { Profile } from "@/types/user";
 import { supabase } from "@/lib/supabaseClient";
 import { calculateAge } from "@/services/youtube";
