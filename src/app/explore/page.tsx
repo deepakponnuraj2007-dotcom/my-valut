@@ -10,9 +10,9 @@ import { Profile } from "@/types/user";
 import { 
   searchYouTubeVideos, 
   mapYouTubeToVideoInsert, 
-  fetchPopularVideos,
-  calculateAge 
+  fetchPopularVideos
 } from "@/services/youtube";
+import { calculateAge } from "@/utils/age";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function ExplorePage() {

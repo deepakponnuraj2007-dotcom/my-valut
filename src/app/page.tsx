@@ -11,8 +11,7 @@ import EmptyState from "@/components/EmptyState";
 import { Video, VideoInsert, Category } from "@/types/video";
 import { Profile } from "@/types/user";
 import { supabase } from "@/lib/supabaseClient";
-import { calculateAge } from "@/services/youtube";
-
+import { calculateAge } from "@/utils/age";
 // No more DEMO_VIDEOS - We are using live Supabase data now
 
 export default function DashboardPage() {
