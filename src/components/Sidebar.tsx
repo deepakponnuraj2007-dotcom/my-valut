@@ -89,6 +89,20 @@ export default function Sidebar({
         </div>
 
         <div className="sticky top-20 space-y-6 overflow-y-auto max-h-[calc(100vh-2rem)] custom-scrollbar pr-2">
+        {/* Home/Explore Link */}
+        <div className="glass rounded-xl p-4">
+          <a 
+            href="/"
+            className="w-full h-11 flex items-center gap-3 px-4 rounded-xl bg-vault-accent/5 border border-vault-accent/20 text-vault-accent hover:bg-vault-accent hover:text-white transition-all group shadow-glow-sm"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span className="text-sm font-bold">Explore Content</span>
+          </a>
+        </div>
+
         {/* Platform Filters */}
         <div className="glass rounded-xl p-4 space-y-1">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-vault-muted mb-3 px-3">

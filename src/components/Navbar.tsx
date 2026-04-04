@@ -90,17 +90,6 @@ export default function Navbar({
 
         {/* Actions */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <Link
-            href="/vault"
-            className="vault-btn-ghost flex items-center gap-2 px-3 sm:px-4 border border-vault-accent/20 text-vault-accent hover:bg-vault-accent/10 transition-all duration-300"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="6" width="20" height="12" rx="2" />
-              <path d="m10 9 5 3-5 3z" />
-            </svg>
-            <span className="hidden xs:inline">My Vault</span>
-          </Link>
-
           {userEmail ? (
             <button
               onClick={onProfileClick}
