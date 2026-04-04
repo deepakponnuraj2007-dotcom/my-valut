@@ -37,14 +37,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setIsLoading(true);
     setErrorMsg("");
 
+    const cleanEmail = email.trim().toLowerCase();
+
     if (view === "login") {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password: DEFAULT_PASSWORD,
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        if (error.message === "Invalid login credentials") {
+          setErrorMsg("Invalid credentials. Try 'Create New Account' if this is a new vault.");
+        } else {
+          setErrorMsg(error.message);
+        }
       } else {
         handleClose();
       }
@@ -56,7 +62,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       }
 
       const { error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password: DEFAULT_PASSWORD,
         options: {
           data: {
