@@ -107,12 +107,6 @@ export default function Navbar({
             </button>
           )}
 
-          <button onClick={onAddVideo} className="vault-btn-primary flex items-center gap-2 px-3 sm:px-6">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            <span className="hidden xs:inline">Add Video</span>
-          </button>
         </div>
       </div>
     </nav>

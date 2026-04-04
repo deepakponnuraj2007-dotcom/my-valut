@@ -189,6 +189,7 @@ export default function VaultPage() {
   };
 
   const handleAddVideoClick = () => {
+    setIsSidebarOpen(false); // Close sidebar on mobile
     if (userEmail) {
       setIsModalOpen(true);
     } else {
@@ -219,6 +220,7 @@ export default function VaultPage() {
             stats={stats}
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
+            onAddVideo={handleAddVideoClick}
           />
 
           <div className="flex-1 min-w-0">

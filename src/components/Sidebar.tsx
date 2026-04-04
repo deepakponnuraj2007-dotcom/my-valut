@@ -16,6 +16,7 @@ interface SidebarProps {
   };
   isOpen?: boolean; // New prop for mobile drawer
   onClose?: () => void; // New prop for mobile drawer
+  onAddVideo?: () => void; // Prop to open add video modal
 }
 
 const getPlatformIcon = (platform: string) => {
@@ -62,6 +63,7 @@ export default function Sidebar({
   stats,
   isOpen = false,
   onClose,
+  onAddVideo,
 }: SidebarProps) {
   return (
     <>
@@ -93,6 +95,7 @@ export default function Sidebar({
         <div className="glass rounded-xl p-4">
           <a 
             href="/"
+            onClick={onClose}
             className="w-full h-11 flex items-center gap-3 px-4 rounded-xl bg-vault-accent/5 border border-vault-accent/20 text-vault-accent hover:bg-vault-accent hover:text-white transition-all group shadow-glow-sm"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -103,13 +106,27 @@ export default function Sidebar({
           </a>
         </div>
 
+        {onAddVideo && (
+          <div className="px-4">
+            <button 
+              onClick={onAddVideo}
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-vault-accent text-white font-bold hover:bg-vault-accent/90 transition-all shadow-glow shadow-vault-accent/20 border border-white/10"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add Video
+            </button>
+          </div>
+        )}
+
         {/* Platform Filters */}
         <div className="glass rounded-xl p-4 space-y-1">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-vault-muted mb-3 px-3">
             Platforms
           </h3>
           <button
-            onClick={() => onPlatformChange("all")}
+            onClick={() => { onPlatformChange("all"); onClose?.(); }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
               activePlatform === "all"
                 ? "bg-vault-accent/10 text-vault-accent border border-vault-accent/20"
@@ -130,7 +147,7 @@ export default function Sidebar({
             return (
               <button
                 key={p}
-                onClick={() => onPlatformChange(p)}
+                onClick={() => { onPlatformChange(p); onClose?.(); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? "bg-vault-accent/10 text-vault-accent border border-vault-accent/20"
@@ -154,7 +171,7 @@ export default function Sidebar({
             return (
               <button
                 key={cat.key}
-                onClick={() => onCategoryChange(cat.key)}
+                onClick={() => { onCategoryChange(cat.key); onClose?.(); }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                   isActive
                     ? "bg-white/5 text-vault-accent"

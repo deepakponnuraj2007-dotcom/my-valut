@@ -5,7 +5,8 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import LoginModal from "@/components/LoginModal";
 import ProfileModal from "@/components/ProfileModal";
-import { YouTubeVideoResource } from "@/types/video";
+import AddVideoModal from "@/components/AddVideoModal";
+import { YouTubeVideoResource, VideoInsert } from "@/types/video";
 import { Profile } from "@/types/user";
 import { 
   searchYouTubeVideos, 
@@ -32,6 +33,7 @@ export default function ExplorePage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   // Auth states
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -238,6 +240,37 @@ export default function ExplorePage() {
     }
   };
 
+  const handleSaveVideo = async (insert: VideoInsert) => {
+    // Check for duplicate in the database
+    const { data: existing } = await supabase
+      .from("videos")
+      .select("id")
+      .eq("user_email", userEmail)
+      .eq("video_url", insert.video_url)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      alert("This video is already in your vault!");
+      setIsModalOpen(false);
+      return;
+    }
+
+    const finalData = {
+      ...insert,
+      user_email: userEmail
+    };
+
+    const { error } = await supabase.from("videos").insert([finalData]);
+
+    if (!error) {
+      setIsSuccess("manual");
+      setTimeout(() => setIsSuccess(null), 3000);
+      setIsModalOpen(false);
+    } else {
+      console.error("Failed to save video:", error);
+    }
+  };
+
   const handleLogout = async (clearData: boolean) => {
     if (clearData) {
       const { error } = await supabase.from("videos").delete().match({ user_email: userEmail });
@@ -245,6 +278,15 @@ export default function ExplorePage() {
     }
     await supabase.auth.signOut();
     setIsProfileOpen(false);
+  };
+
+  const handleAddVideoRequest = () => {
+    setIsSidebarOpen(false); // Close sidebar on mobile
+    if (userEmail) {
+      setIsModalOpen(true);
+    } else {
+      setIsLoginModalOpen(true);
+    }
   };
 
   const filteredResults = useMemo(() => {
@@ -256,7 +298,7 @@ export default function ExplorePage() {
   return (
     <>
       <Navbar
-        onAddVideo={() => {}} 
+        onAddVideo={() => setIsModalOpen(true)} 
         searchQuery=""
         onSearchChange={() => {}}
         userEmail={userEmail}
@@ -294,7 +336,7 @@ export default function ExplorePage() {
               <h3 className="text-xs font-semibold text-vault-muted uppercase tracking-widest mb-4">Platforms</h3>
               <div className="space-y-1">
                 <button 
-                  onClick={() => { setActivePlatform("youtube"); setQuery(""); }}
+                  onClick={() => { setIsSidebarOpen(false); setActivePlatform("youtube"); setQuery(""); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                     activePlatform === "youtube" 
                     ? "bg-vault-accent/15 text-vault-accent border border-vault-accent/30 font-medium shadow-glow-sm"
@@ -307,7 +349,7 @@ export default function ExplorePage() {
                   YouTube
                 </button>
                 <button 
-                  onClick={() => { setActivePlatform("instagram"); setQuery(""); }}
+                  onClick={() => { setIsSidebarOpen(false); setActivePlatform("instagram"); setQuery(""); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                     activePlatform === "instagram" 
                     ? "bg-vault-instagram/15 text-vault-instagram border border-vault-instagram/30 font-medium shadow-glow-sm"
@@ -320,7 +362,7 @@ export default function ExplorePage() {
                   Instagram
                 </button>
                 <button 
-                  onClick={() => { setActivePlatform("facebook"); setQuery(""); }}
+                  onClick={() => { setIsSidebarOpen(false); setActivePlatform("facebook"); setQuery(""); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
                     activePlatform === "facebook" 
                     ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium shadow-glow-sm"
@@ -479,6 +521,16 @@ export default function ExplorePage() {
                   <path d="M5 12h14m-7-7 7 7-7 7" />
                 </svg>
               </a>
+
+              <button 
+                onClick={handleAddVideoRequest}
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-vault-accent text-white font-bold hover:bg-vault-accent/90 focus:ring-2 focus:ring-vault-accent/50 outline-none transition-all shadow-glow shadow-vault-accent/20 border border-white/10 active:scale-[0.98]"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Add Video
+              </button>
             </div>
 
             <div className="p-4 rounded-2xl bg-vault-accent/5 border border-vault-accent/10">
@@ -686,6 +738,11 @@ export default function ExplorePage() {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
+      />
+      <AddVideoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveVideo}
       />
       <ProfileModal
         isOpen={isProfileOpen}
