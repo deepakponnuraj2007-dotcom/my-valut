@@ -536,84 +536,66 @@ export default function ExplorePage() {
                 <p className="text-vault-muted animate-pulse">Finding matching {activePlatform} content...</p>
               </div>
             ) : filteredResults.length > 0 ? (
-              <div className={`grid gap-6 ${
-                activePlatform === "youtube" 
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3" 
-                : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-              }`}>
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                 {filteredResults.map((video) => {
-                  const igRegex = /(https?:\/\/(www\.)?instagram\.com\/(p|reels|reel)\/([^/?#&\s]+))/;
-                  const fbRegex = /(https?:\/\/(www\.)?facebook\.com\/([^/?#&\s]+)\/videos\/([^/?#&\s]+))/;
-                  
-                  let nativeUrl = `https://www.youtube.com/watch?v=${video.id}`;
-                  if (activePlatform === "instagram") {
-                    const match = video.snippet.description.match(igRegex);
-                    if (match) nativeUrl = match[0];
-                  } else if (activePlatform === "facebook") {
-                    const match = video.snippet.description.match(fbRegex);
-                    if (match) nativeUrl = match[0];
-                  }
-
-                  const isVertical = activePlatform !== "youtube";
+                  // All explore content comes from YouTube API, so always use YouTube URL
+                  const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
 
                   return (
-                    <div key={video.id} className={`group glass rounded-2xl overflow-hidden card-hover animate-fade-in flex flex-col ${isVertical ? "h-full mb-2" : ""}`}>
+                    <div key={video.id} className="group glass rounded-2xl overflow-hidden card-hover animate-fade-in flex flex-col">
                       <a 
-                        href={nativeUrl} 
+                        href={videoUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className={`relative overflow-hidden block ${isVertical ? "aspect-[9/16]" : "aspect-video"}`}
+                        className="relative overflow-hidden block aspect-video"
                       >
                         <img
                           src={video.snippet.thumbnails.high?.url || video.snippet.thumbnails.medium?.url}
                           alt={video.snippet.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
-                        <div className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded uppercase border backdrop-blur-md transition-all z-10 ${
-                          activePlatform === "youtube" ? "bg-black/80 text-vault-youtube border-vault-youtube/30" :
-                          activePlatform === "instagram" ? "bg-black/80 text-vault-instagram border-vault-instagram/30" :
-                          "bg-black/80 text-blue-400 border-blue-500/30"
-                        }`}>
-                          {activePlatform}
+                        {/* Source badge - always YouTube since content comes from YouTube API */}
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
+                          <div className="text-[10px] font-bold px-2 py-0.5 rounded uppercase border backdrop-blur-md bg-black/80 text-vault-youtube border-vault-youtube/30 flex items-center gap-1">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                            </svg>
+                            YouTube
+                          </div>
+                          {activePlatform !== "youtube" && (
+                            <div className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase border backdrop-blur-md ${
+                              activePlatform === "instagram" ? "bg-black/80 text-vault-instagram border-vault-instagram/30" :
+                              "bg-black/80 text-blue-400 border-blue-500/30"
+                            }`}>
+                              {activePlatform === "instagram" ? "IG Style" : "FB Style"}
+                            </div>
+                          )}
                         </div>
                         
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
                         
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center border backdrop-blur-md ${
-                            activePlatform === "youtube" ? "bg-red-500/10 border-red-500/20" :
-                            activePlatform === "instagram" ? "bg-vault-instagram/10 border-vault-instagram/20" :
-                            "bg-blue-500/10 border-blue-500/20"
-                          }`}>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center border backdrop-blur-md bg-red-500/10 border-red-500/20">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                               <path d="M5 3l14 9-14 9V3z" />
                             </svg>
                           </div>
                         </div>
-
-                        {nativeUrl.includes(activePlatform) && (
-                          <div className="absolute bottom-2 left-2 bg-green-500/80 text-[8px] font-bold px-2 py-0.5 rounded-full text-white flex items-center gap-1 z-10">
-                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Native
-                          </div>
-                        )}
                       </a>
                       
                       <div className="p-3 flex flex-col flex-1 gap-2">
                         <a 
-                          href={nativeUrl} 
+                          href={videoUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className={`text-xs font-bold line-clamp-2 text-vault-text transition-colors block ${
-                            activePlatform === "youtube" ? "group-hover:text-vault-accent" :
-                            activePlatform === "instagram" ? "group-hover:text-vault-instagram" :
-                            "group-hover:text-blue-400"
-                          }`}
+                          className="text-xs font-bold line-clamp-2 text-vault-text transition-colors block group-hover:text-vault-accent"
                         >
                           {video.snippet.title}
                         </a>
+
+                        <p className="text-[10px] text-vault-muted truncate">
+                          {video.snippet.channelTitle}
+                        </p>
 
                         <div className="flex items-center justify-between mt-auto">
                           <span className="text-[9px] text-vault-muted bg-white/5 px-1.5 py-0.5 rounded-full">
@@ -624,9 +606,7 @@ export default function ExplorePage() {
                             onClick={() => addToVault(video)}
                             className={`p-1.5 rounded-lg transition-all ${
                               addedIds.has(video.id) ? "text-green-400 bg-green-400/10" :
-                              activePlatform === "youtube" ? "text-vault-accent hover:bg-vault-accent hover:text-white" :
-                              activePlatform === "instagram" ? "text-vault-instagram hover:bg-vault-instagram hover:text-white" :
-                              "text-blue-400 hover:bg-blue-500 hover:text-white"
+                              "text-vault-accent hover:bg-vault-accent hover:text-white"
                             }`}
                           >
                             {addedIds.has(video.id) ? (
