@@ -146,12 +146,20 @@ function autoDetectCategory(text: string): Category {
   return "Other";
 }
 
+/** Filter options for content discovery */
+export type ContentFilters = {
+  regionCode?: string;
+  language?: string;
+  videoCategoryId?: string;
+};
+
 /**
- * Search YouTube videos by query string. Returns up to `maxResults` items.
+ * Search YouTube videos by query string with optional filters.
  */
 export async function searchYouTubeVideos(
   query: string,
-  maxResults: number = 5
+  maxResults: number = 5,
+  filters?: ContentFilters
 ): Promise<YouTubeVideoResource[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
@@ -162,7 +170,7 @@ export async function searchYouTubeVideos(
   // Step 1: Search for video IDs (supporting more than 50 via pagination)
   let videoIds: string[] = [];
   let nextPageToken: string | undefined;
-  const targetCount = Math.min(maxResults, 100); // User requested 100
+  const targetCount = Math.min(maxResults, 100);
 
   while (videoIds.length < targetCount) {
     const searchParams = new URLSearchParams({
@@ -173,9 +181,13 @@ export async function searchYouTubeVideos(
       maxResults: String(Math.min(targetCount - videoIds.length, 50)),
       key: apiKey,
     });
+    // Apply filters
+    if (filters?.regionCode) searchParams.set("regionCode", filters.regionCode);
+    if (filters?.language) searchParams.set("relevanceLanguage", filters.language);
+    if (filters?.videoCategoryId) searchParams.set("videoCategoryId", filters.videoCategoryId);
     if (nextPageToken) searchParams.append("pageToken", nextPageToken);
 
-    const searchRes = await fetch(`${YOUTUBE_API_BASE}/search?${searchParams}`);
+    const searchRes = await fetch(`${YOUTUBE_API_BASE}/search?${searchParams}`, { cache: "no-store" });
     if (!searchRes.ok) break;
 
     const data = await searchRes.json();
@@ -189,7 +201,6 @@ export async function searchYouTubeVideos(
   if (videoIds.length === 0) return [];
 
   // Step 2: Fetch full details for those IDs
-  // YouTube allows fetching up to 50 IDs at a time in the /videos endpoint
   let allResources: YouTubeVideoResource[] = [];
   
   for (let i = 0; i < videoIds.length; i += 50) {
@@ -211,9 +222,12 @@ export async function searchYouTubeVideos(
 }
 
 /**
- * Fetch most popular videos (Trending) from YouTube.
+ * Fetch most popular videos (Trending) from YouTube with optional filters.
  */
-export async function fetchPopularVideos(maxResults: number = 50): Promise<YouTubeVideoResource[]> {
+export async function fetchPopularVideos(
+  maxResults: number = 50,
+  filters?: ContentFilters
+): Promise<YouTubeVideoResource[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) throw new Error("YOUTUBE_API_KEY not set.");
 
@@ -225,12 +239,19 @@ export async function fetchPopularVideos(maxResults: number = 50): Promise<YouTu
     const params = new URLSearchParams({
       part: "snippet,statistics,contentDetails",
       chart: "mostPopular",
+      regionCode: filters?.regionCode || "IN",
       maxResults: String(Math.min(targetCount - allResources.length, 50)),
       key: apiKey,
     });
+    // Apply category filter if set
+    if (filters?.videoCategoryId) params.set("videoCategoryId", filters.videoCategoryId);
+    // YouTube trending API uses hl for language hint
+    if (filters?.language) params.set("hl", filters.language);
     if (nextPageToken) params.append("pageToken", nextPageToken);
 
-    const response = await fetch(`${YOUTUBE_API_BASE}/videos?${params}`);
+    const response = await fetch(`${YOUTUBE_API_BASE}/videos?${params}`, {
+      cache: "no-store",
+    });
     if (!response.ok) break;
 
     const data: YouTubeAPIResponse = await response.json();

@@ -10,7 +10,8 @@ import { Profile } from "@/types/user";
 import { 
   searchYouTubeVideos, 
   mapYouTubeToVideoInsert, 
-  fetchPopularVideos
+  fetchPopularVideos,
+  ContentFilters
 } from "@/services/youtube";
 import { calculateAge } from "@/utils/age";
 import { supabase } from "@/lib/supabaseClient";
@@ -24,11 +25,83 @@ export default function ExplorePage() {
   const [isSuccess, setIsSuccess] = useState<string | null>(null);
   const [activePlatform, setActivePlatform] = useState<string>("youtube");
   
+  // Content filter states
+  const [selectedRegion, setSelectedRegion] = useState("IN");
+  const [selectedLanguage, setSelectedLanguage] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
   // Auth states
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Filter data
+  const regions = [
+    { code: "IN", name: "🇮🇳 India" },
+    { code: "US", name: "🇺🇸 United States" },
+    { code: "GB", name: "🇬🇧 United Kingdom" },
+    { code: "CA", name: "🇨🇦 Canada" },
+    { code: "AU", name: "🇦🇺 Australia" },
+    { code: "DE", name: "🇩🇪 Germany" },
+    { code: "FR", name: "🇫🇷 France" },
+    { code: "JP", name: "🇯🇵 Japan" },
+    { code: "KR", name: "🇰🇷 South Korea" },
+    { code: "BR", name: "🇧🇷 Brazil" },
+    { code: "RU", name: "🇷🇺 Russia" },
+    { code: "MX", name: "🇲🇽 Mexico" },
+    { code: "SA", name: "🇸🇦 Saudi Arabia" },
+    { code: "AE", name: "🇦🇪 UAE" },
+    { code: "SG", name: "🇸🇬 Singapore" },
+    { code: "MY", name: "🇲🇾 Malaysia" },
+    { code: "ID", name: "🇮🇩 Indonesia" },
+    { code: "PH", name: "🇵🇭 Philippines" },
+    { code: "TH", name: "🇹🇭 Thailand" },
+    { code: "VN", name: "🇻🇳 Vietnam" },
+  ];
+
+  const languages = [
+    { code: "", name: "All Languages" },
+    { code: "en", name: "English" },
+    { code: "ta", name: "தமிழ் (Tamil)" },
+    { code: "hi", name: "हिन्दी (Hindi)" },
+    { code: "te", name: "తెలుగు (Telugu)" },
+    { code: "ml", name: "മലയാളം (Malayalam)" },
+    { code: "kn", name: "ಕನ್ನಡ (Kannada)" },
+    { code: "bn", name: "বাংলা (Bengali)" },
+    { code: "mr", name: "मराठी (Marathi)" },
+    { code: "gu", name: "ગુજરાતી (Gujarati)" },
+    { code: "pa", name: "ਪੰਜਾਬੀ (Punjabi)" },
+    { code: "es", name: "Español (Spanish)" },
+    { code: "fr", name: "Français (French)" },
+    { code: "de", name: "Deutsch (German)" },
+    { code: "ja", name: "日本語 (Japanese)" },
+    { code: "ko", name: "한국어 (Korean)" },
+    { code: "pt", name: "Português (Portuguese)" },
+    { code: "ar", name: "العربية (Arabic)" },
+    { code: "ru", name: "Русский (Russian)" },
+    { code: "zh", name: "中文 (Chinese)" },
+    { code: "th", name: "ไทย (Thai)" },
+  ];
+
+  const categories = [
+    { id: "", name: "All Categories" },
+    { id: "1", name: "🎬 Film & Animation" },
+    { id: "2", name: "🚗 Autos & Vehicles" },
+    { id: "10", name: "🎵 Music" },
+    { id: "15", name: "🐾 Pets & Animals" },
+    { id: "17", name: "⚽ Sports" },
+    { id: "19", name: "✈️ Travel & Events" },
+    { id: "20", name: "🎮 Gaming" },
+    { id: "22", name: "👥 People & Blogs" },
+    { id: "23", name: "😂 Comedy" },
+    { id: "24", name: "🎭 Entertainment" },
+    { id: "25", name: "📰 News & Politics" },
+    { id: "26", name: "💄 How-to & Style" },
+    { id: "27", name: "📚 Education" },
+    { id: "28", name: "🔬 Science & Technology" },
+  ];
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -53,7 +126,8 @@ export default function ExplorePage() {
     fetchPopular();
 
     return () => subscription.unsubscribe();
-  }, [activePlatform]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePlatform, selectedRegion, selectedLanguage, selectedCategory]);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -67,17 +141,23 @@ export default function ExplorePage() {
     }
   };
 
+  const getActiveFilters = (): ContentFilters => ({
+    regionCode: selectedRegion || undefined,
+    language: selectedLanguage || undefined,
+    videoCategoryId: selectedCategory || undefined,
+  });
+
   const fetchPopular = async () => {
     setIsLoading(true);
     setResults([]);
     try {
+      const filters = getActiveFilters();
       if (activePlatform === "youtube") {
-        const data = await fetchPopularVideos(100);
+        const data = await fetchPopularVideos(100, filters);
         setResults(data);
       } else {
-        // For IG/FB, search for trending reels/videos via YouTube proxy
         const platformQuery = activePlatform === "instagram" ? "trending instagram reels shorts" : "trending facebook videos";
-        const data = await searchYouTubeVideos(platformQuery, 50);
+        const data = await searchYouTubeVideos(platformQuery, 50, filters);
         setResults(data);
       }
     } catch (error) {
@@ -91,6 +171,7 @@ export default function ExplorePage() {
     setIsLoading(true);
     setResults([]);
     try {
+      const filters = getActiveFilters();
       let platformKeywords = "";
       if (activePlatform === "instagram") platformKeywords = "instagram reel shorts";
       if (activePlatform === "facebook") platformKeywords = "facebook video";
@@ -99,7 +180,7 @@ export default function ExplorePage() {
         ? searchQuery 
         : `${searchQuery} ${platformKeywords}`.trim();
       
-      const data = await searchYouTubeVideos(effectiveQuery, 50);
+      const data = await searchYouTubeVideos(effectiveQuery, 50, filters);
       setResults(data);
     } catch (error) {
       console.error("Search failed:", error);
@@ -254,6 +335,130 @@ export default function ExplorePage() {
               </div>
             </div>
 
+            {/* Content Filters Section */}
+            <div className="space-y-4">
+              <button 
+                onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                className="w-full flex items-center justify-between text-xs font-semibold text-vault-muted uppercase tracking-widest"
+              >
+                <span className="flex items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="7" y1="12" x2="17" y2="12" />
+                    <line x1="10" y1="18" x2="14" y2="18" />
+                  </svg>
+                  Content Filters
+                </span>
+                <svg 
+                  width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                  className={`transition-transform duration-300 ${isFiltersOpen ? 'rotate-180' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              <div className={`space-y-3 overflow-hidden transition-all duration-400 ease-out ${
+                isFiltersOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                {/* Region Filter */}
+                <div>
+                  <label className="text-[10px] font-bold text-vault-muted uppercase tracking-wider mb-1.5 block flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="2" y1="12" x2="22" y2="12" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    Region
+                  </label>
+                  <select
+                    value={selectedRegion}
+                    onChange={(e) => setSelectedRegion(e.target.value)}
+                    className="w-full bg-vault-card border border-white/10 rounded-xl px-3 py-2 text-xs text-vault-text focus:outline-none focus:ring-2 focus:ring-vault-accent/50 focus:border-vault-accent transition-all appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                  >
+                    {regions.map(r => (
+                      <option key={r.code} value={r.code}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Language Filter */}
+                <div>
+                  <label className="text-[10px] font-bold text-vault-muted uppercase tracking-wider mb-1.5 block flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 8l6 6" />
+                      <path d="M4 14l6-6 2-3" />
+                      <path d="M2 5h12" />
+                      <path d="M7 2h1" />
+                      <path d="m22 22-5-10-5 10" />
+                      <path d="M14 18h6" />
+                    </svg>
+                    Language
+                  </label>
+                  <select
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                    className="w-full bg-vault-card border border-white/10 rounded-xl px-3 py-2 text-xs text-vault-text focus:outline-none focus:ring-2 focus:ring-vault-accent/50 focus:border-vault-accent transition-all appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                  >
+                    {languages.map(l => (
+                      <option key={l.code} value={l.code}>{l.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Category Filter */}
+                <div>
+                  <label className="text-[10px] font-bold text-vault-muted uppercase tracking-wider mb-1.5 block flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                      <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    Category
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full bg-vault-card border border-white/10 rounded-xl px-3 py-2 text-xs text-vault-text focus:outline-none focus:ring-2 focus:ring-vault-accent/50 focus:border-vault-accent transition-all appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                  >
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Active Filters Indicator */}
+                {(selectedLanguage || selectedCategory || selectedRegion !== "IN") && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {selectedRegion !== "IN" && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-vault-accent/10 text-vault-accent border border-vault-accent/20 font-medium">
+                        {regions.find(r => r.code === selectedRegion)?.name}
+                      </span>
+                    )}
+                    {selectedLanguage && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+                        {languages.find(l => l.code === selectedLanguage)?.name}
+                      </span>
+                    )}
+                    {selectedCategory && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                        {categories.find(c => c.id === selectedCategory)?.name}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => { setSelectedRegion("IN"); setSelectedLanguage(""); setSelectedCategory(""); }}
+                      className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors font-medium"
+                    >
+                      ✕ Clear All
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="p-4 rounded-2xl bg-vault-accent/5 border border-vault-accent/10">
               <p className="text-xs text-vault-accent font-bold mb-2 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -264,7 +469,7 @@ export default function ExplorePage() {
                 Tip
               </p>
               <p className="text-[11px] text-vault-text-secondary leading-relaxed">
-                Add trending videos to your vault in one click to keep inspiration alive!
+                Use filters to discover region-specific trending content in your preferred language!
               </p>
             </div>
           </aside>
@@ -272,12 +477,18 @@ export default function ExplorePage() {
           <div className="flex-1 min-w-0">
             <div className="mb-12">
               <h1 className="text-4xl font-black mb-4 tracking-tight">
-                Explore <span className="text-gradient">Popular Content</span>
+                Explore <span className="text-gradient">Trending and Popular Content</span>
               </h1>
-              <p className="text-vault-text-secondary max-w-2xl">
-                Search for the latest and most popular videos. 
+              <p className="text-vault-text-secondary max-w-2xl mb-3">
+                Discover the latest trending videos updated daily. 
                 One click to save them directly to your personal vault.
               </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vault-accent/10 border border-vault-accent/20">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-xs font-semibold text-vault-accent">
+                  Trending Today — {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </span>
+              </div>
             </div>
 
             <form onSubmit={handleSearch} className="max-w-2xl mb-16 relative">
